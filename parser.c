@@ -45,15 +45,28 @@ int main(){
    for(i = 0;i < 284807; i ++){ 
       char[1000] line;
       fgets(line, 1000, stream);
-   # TODO: 
-   #    1) parse csv into struct format
-   #    2) implement smote algorithm sequentially
-   #    3) implement algorithm in parallel
-   #    4) compare performance
-   # 
-   # OPTIONAL:
-   #    1) Implement machine learning model on un-'smote'd and 'smote'd data to demonstrate utility
-      
+   };
+   /* TODO:                                                                                           */ 
+   /*    1) parse csv into struct format                                                              */
+   /*    2) implement smote algorithm sequentially                                                    */
+   /*    3) implement algorithm in parallel                                                           */
+   /*    4) compare performance                                                                       */
+   /*       - use smaller subsets of total data to determine relative improvement                     */
+   /*                                                                                                 */
+   /* OPTIONAL:                                                                                       */
+   /*    1) implement machine learning model on un-'smote'd and 'smote'd data to demonstrate utility  */
+ 
+
+   /* Assuming that we have parsed all of the data already... */
+   
+      /* here begins sequential SMOTE */
+     
+         /* identify minority classes (sample.class == 1) */
+
+         /* calculate the euclidean distance (sqrt(dx_0^2 + ... + dx_n^2)) between each element in minority class where n is total minority class elements */
+
+         /* randomly select N elements for each x_minority from their set of neighbors where (N  = n_majority/n_minority) */
+            /* create N new samples for each minority element using the formula : (x_new = x_old + rand(0,1)*|x_old - x_rand|) */  
    };
 
 
