@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-struct sample {
+/* struct sample {
    int time;
    float V1;
    float V2;
@@ -34,11 +34,11 @@ struct sample {
    float V28;
    float amount;
    int class;
-}   
+}   */
 
 int main(){
    sample[284807] data; 
-   char* list = ["time", "V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9", "V10", "V11", "V12", "V13", "V14", "V15", "V16", "V17", "V18", "V19", "V20", "V21", "V22", "V23", "V24", "V25", "V26", "V27", "V28", "amount", "class"]; 
+ /*  char* list = ["time", "V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9", "V10", "V11", "V12", "V13", "V14", "V15", "V16", "V17", "V18", "V19", "V20", "V21", "V22", "V23", "V24", "V25", "V26", "V27", "V28", "amount", "class"]; */
    FILE* stream = fopen("creditcard.csv", "r");
    
    int i;
@@ -46,11 +46,11 @@ int main(){
       char[1000] line;
       fgets(line, 1000, stream);
    };
-   /* TODO:                                                                                           */ 
-   /*    1) parse csv into struct format                                                              */
-   /*    2) implement smote algorithm sequentially                                                    */
-   /*    3) implement algorithm in parallel                                                           */
-   /*    4) compare performance                                                                       */
+   /* TODO: four functions:                                                                                          */ 
+   /*    1) parse csv into array format - Mahler                                                              */
+   /*    2) implement smote algorithm sequentially - Jared                                                    */
+   /*    3) implement algorithm in parallel - both                                                          */
+   /*    4) compare performance  - both                                                                     */
    /*       - use smaller subsets of total data to determine relative improvement                     */
    /*                                                                                                 */
    /* OPTIONAL:                                                                                       */
