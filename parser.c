@@ -82,6 +82,39 @@ int parseCSV(float** array, int* minorities,char* filename) {
 
 }
 
+int writeCSV(float** array, int rows, int cols, char* filename) {
+
+  FILE* fptr;
+  fptr = fopen(filename, "w");
+  if (fptr == NULL) {
+    printf("Error\n");
+    exit(1);
+  }
+  int i,j;
+  for (i = 0; i < rows; i++) {
+    for (j = 0; j < cols; j++) {
+      char buffer[128];
+      int ret = snprintf(buffer, sizeof buffer, "%f", array[i][j]);
+      if (ret < 0) {
+        printf("Error\n");
+        exit(1);
+      }
+      if (ret >= sizeof buffer) {
+        printf("%f",array[i][j]);
+        exit(1);
+      }
+      fputs(buffer,fptr);
+      if (j == cols - 1) {
+        fputs("\n",fptr);
+      } else {
+        fputs(",",fptr);
+      }
+    }
+  }
+  fclose(fptr);
+  return 0;
+
+}
 
 int main(){
    // Generate array of data with minority element indicies stored in minorities
