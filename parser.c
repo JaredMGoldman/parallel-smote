@@ -93,45 +93,58 @@ int main(){
    }
    int total_min = parseCSV(arr, minorities, "creditcard.csv");
    
-   float** dist_arr = malloc(sizeof(float*) * total_min);
+   float* dist_arr = malloc(sizeof(float) * total_min));
    int i;
    int j;
    int k;
    int idx_0;
    int idx_1;
-   int dist;
+   
    //  Calculate distance between all minority elements
 
-   for (i = 0; i < total_min; i++){
+   for (i = 0; i < total_min; i++;){
       idx_0 = minorities[i];
-      for(j = 0; j < total_min - i && j != i; j++){
+      for(j = i; j < total_min; j++){
          idx_1 = minorities[j];
-         dist = 0;
+         int dist = 0;
          for(k = 0; k < 31; k ++){
             dist = dist +  pow(arr[idx_0][k] - arr[idx_1][k], 2);
          } 
          dist = sqrt(dist);
          dist_arr[i][j] = dist;
          dist_arr[j][i] = dist;
+         }
       }
-    }
+   }
 
    // generate new values between existing 
-   int len = (int) ceil(N/2)-total_min;
-   float** newVals = malloc(sizeof(float*) * len);
-   double ratio = ceil(N/total_min);
-   for(i = 0; i < total_min; i ++){
-      idx_0 = minorities[i];
-      for(j = 0; j < ratio + 1 - i && j != i; j ++){
-         idx_1 = minorities[j];
-         float rand_seed0 = rand();
-         float rand_seed1 = rand();
-         dist = dist_arr[i][j];
-         for(k = 0; k < 31; k ++;){
-            newVals[i][k] = arr[idx_0][k] + rand_seed0 * dist;
-            newVals[len-i-1][k] = arr[idx_1][k] + rand_seed1 * dist;
-         }
-    }
+   int total_new = (int) ceil(N/2)-total_min;
+   float** newVals = malloc(sizeof(float*) * total_new);
+   for (idx = 0; idx < total_new; ++idx) {
+     newVals[idx] = malloc(sizeof(float) * M);
+   }
+   
+   idx = 0;
+   while(idx < total_new){
+      for(i = 0; i < total_min; i ++){
+          idx_0 = minorities[i];
+          for(j = i+1;idx < total_new && j < total_min; j ++){
+            idx_1 = minorities[j];
+            float rand_seed0 = rand();
+            float rand_seed1 = rand();
+            dist = dist_arr[i][j];
+            for(k = 0; k < 31; k ++){
+                newVals[idx][k] = arr[idx_0][k] + rand_seed0 * dist;
+            }
+            idx ++;
+            if(idx < total_new){
+                for(k = 0; k < 31; k++){
+                  newVals[idx][k] = arr[idx_1][k] + rand_seed1 * dist;
+                }
+                idx ++;
+            } else {return 0;}
+          }
+      }
+   }
 
-  return 0;
-  };
+   return 0;
