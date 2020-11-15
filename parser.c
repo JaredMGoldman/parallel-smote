@@ -1,46 +1,35 @@
+/* TODO: four functions:                                                                           */ 
+   /*    1) parse csv into array format - Mahler                                                      */
+   /*    2) implement smote algorithm sequentially - Jared                                            */
+   /*    3) implement algorithm in parallel - both                                                    */
+   /*    4) compare performance  - both                                                               */
+   /*       - use smaller subsets of total data to determine relative improvement                     */
+   /*                                                                                                 */
+   /* OPTIONAL:                                                                                       */
+   /*    1) implement machine learning model on un-'smote'd and 'smote'd data to demonstrate utility  */
+ 
+
+   /* Assuming that we have parsed all of the data already... */
+     
+      /* here begins sequential SMOTE */
+     
+         /* identify minority classes (sample.class == 1) */
+   
+         /* calculate the euclidean distance (sqrt(dx_0^2 + ... + dx_n^2)) between each element in minority class where n is total minority class elements */
+
+         /* randomly select N elements for each x_minority from their set of neighbors where (N  = n_majority/n_minority) */
+            /* create N new samples for each minority element using the formula : (x_new = x_old + rand(0,1)*|x_old - x_rand|) */  
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #define N 284807
 #define M 31
+#define RAND_MAX = 1;
 
-/* struct sample {
-   int time;
-   float V1;
-   float V2;
-   float V3;
-   float V4;
-   float V5;
-   float V6;
-   float V7;
-   float V8;
-   float V9;
-   float V10;
-   float V11;
-   float V12;
-   float V13;
-   float V14;
-   float V15;
-   float V16;
-   float V17;
-   float V18;
-   float V19;
-   float V20;
-   float V21;
-   float V22;
-   float V23;
-   float V24;
-   float V25;
-   float V26;
-   float V27;
-   float V28;
-   float amount;
-   int class;
-}   */
-
-
-void parseCSV(float** array, char* filename) {
+int parseCSV(float** array, int* minorities,char* filename) {
 
   //create buffer, counter
   //while file hasnextline
@@ -57,7 +46,7 @@ void parseCSV(float** array, char* filename) {
     printf("Error\n");
     exit(1);
   }
-
+  int minInd = 0;
   int bufferSize = 1000;
   char buffer[bufferSize];
   n_idx = 0;
@@ -72,6 +61,8 @@ void parseCSV(float** array, char* filename) {
           val = 0;
         } else {
           val = 1;
+          minorities[minInd] = n_idx;
+          minInd ++;
         }
       } else {
         val = atof(token);
@@ -87,57 +78,60 @@ void parseCSV(float** array, char* filename) {
   }
 
   fclose(fptr);
+  return minInd;
 
 }
 
 
 int main(){
-   //sample[284807] data; 
- /*  char* list = ["time", "V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9", "V10", "V11", "V12", "V13", "V14", "V15", "V16", "V17", "V18", "V19", "V20", "V21", "V22", "V23", "V24", "V25", "V26", "V27", "V28", "amount", "class"]; */
-
+   // Generate array of data with minority element indicies stored in minorities
    float** arr = malloc(sizeof(float*) * N);
+   int* minorities = malloc(sizeof(int) * 142404);
    int idx;
    for (idx = 0; idx < N; ++idx) {
      arr[idx] = malloc(sizeof(float) * M);
    }
-   parseCSV(arr,"creditcard.csv");
-   return 0;
-   //FILE* stream = fopen("creditcard.csv", "r");
+   int total_min = parseCSV(arr, minorities, "creditcard.csv");
    
-   //int i;
-   //for(i = 0;i < 284807; i ++){ 
-   //   char[1000] line;
-   //   fgets(line, 1000, stream);
-   //};
-   /* TODO: four functions:                                                                                          */ 
-   /*    1) parse csv into array format - Mahler                                                              */
-   /*    2) implement smote algorithm sequentially - Jared                                                    */
-   /*    3) implement algorithm in parallel - both                                                          */
-   /*    4) compare performance  - both                                                                     */
-   /*       - use smaller subsets of total data to determine relative improvement                     */
-   /*                                                                                                 */
-   /* OPTIONAL:                                                                                       */
-   /*    1) implement machine learning model on un-'smote'd and 'smote'd data to demonstrate utility  */
- 
+   float** dist_arr = malloc(sizeof(float*) * total_min);
+   int i;
+   int j;
+   int k;
+   int idx_0;
+   int idx_1;
+   int dist;
+   //  Calculate distance between all minority elements
 
-   /* Assuming that we have parsed all of the data already... */
-   
-      /* here begins sequential SMOTE */
-     
-         /* identify minority classes (sample.class == 1) */
+   for (i = 0; i < total_min; i++){
+      idx_0 = minorities[i];
+      for(j = 0; j < total_min - i && j != i; j++){
+         idx_1 = minorities[j];
+         dist = 0;
+         for(k = 0; k < 31; k ++){
+            dist = dist +  pow(arr[idx_0][k] - arr[idx_1][k], 2);
+         } 
+         dist = sqrt(dist);
+         dist_arr[i][j] = dist;
+         dist_arr[j][i] = dist;
+      }
+    }
 
-         /* calculate the euclidean distance (sqrt(dx_0^2 + ... + dx_n^2)) between each element in minority class where n is total minority class elements */
+   // generate new values between existing 
+   int len = (int) ceil(N/2)-total_min;
+   float** newVals = malloc(sizeof(float*) * len);
+   double ratio = ceil(N/total_min);
+   for(i = 0; i < total_min; i ++){
+      idx_0 = minorities[i];
+      for(j = 0; j < ratio + 1 - i && j != i; j ++){
+         idx_1 = minorities[j];
+         float rand_seed0 = rand();
+         float rand_seed1 = rand();
+         dist = dist_arr[i][j];
+         for(k = 0; k < 31; k ++;){
+            newVals[i][k] = arr[idx_0][k] + rand_seed0 * dist;
+            newVals[len-i-1][k] = arr[idx_1][k] + rand_seed1 * dist;
+         }
+    }
 
-         /* randomly select N elements for each x_minority from their set of neighbors where (N  = n_majority/n_minority) */
-            /* create N new samples for each minority element using the formula : (x_new = x_old + rand(0,1)*|x_old - x_rand|) */  
-   };
-
-
-
-
-
-
-
-
-
-
+  return 0;
+  };
