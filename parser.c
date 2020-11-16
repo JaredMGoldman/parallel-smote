@@ -116,7 +116,6 @@ int writeCSV(float** array, int rows, int cols, char* filename) {
 
 float r2()
 {
-  int i;
   float rand_int = (float) rand();
   float new_max = (float) RAND_MAX;
   float rand_float = rand_int / new_max;
