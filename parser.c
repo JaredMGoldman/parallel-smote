@@ -27,7 +27,6 @@
 
 #define N 284807
 #define M 31
-#define RAND_MAX = 1;
 
 int parseCSV(float** array, int* minorities,char* filename) {
 
@@ -57,26 +56,25 @@ int parseCSV(float** array, int* minorities,char* filename) {
     while (token != NULL) {
       float val;
       if (m_idx == 30) {
-        if (strcmp(token,"0")) {
+        if (strcmp(token,"\"1\"") < 0) {
           val = 0;
         } else {
           val = 1;
           minorities[minInd] = n_idx;
-          minInd ++;
+          minInd++;
         }
       } else {
         val = atof(token);
+        if(m_idx == 0){ 
+          val = val/172792.0F;
+        }
       }
-      //printf("Attempting to populate array[%d][%d] with %f\n",n_idx,m_idx,val);
       array[n_idx][m_idx] = val;
-      //printf("Populated array[%d][%d]\n",n_idx,m_idx);
       m_idx++;
       token = strtok(NULL, ",");
     }
     n_idx++;
-    //printf("%d\n",n_idx);
   }
-
   fclose(fptr);
   return minInd;
 
@@ -116,6 +114,15 @@ int writeCSV(float** array, int rows, int cols, char* filename) {
 
 }
 
+float r2()
+{
+  int i;
+  float rand_int = (float) rand();
+  float new_max = (float) RAND_MAX;
+  float rand_float = rand_int / new_max;
+  return rand_float;
+}
+
 int main(){
    // Generate array of data with minority element indicies stored in minorities
    float** arr = malloc(sizeof(float*) * N);
@@ -125,59 +132,71 @@ int main(){
      arr[idx] = malloc(sizeof(float) * M);
    }
    int total_min = parseCSV(arr, minorities, "creditcard.csv");
-   
-   float* dist_arr = malloc(sizeof(float) * total_min));
+   int dist_size = total_min*total_min;
+   float** dist_arr = malloc(sizeof(float*) * dist_size);
+   for (idx = 0; idx < dist_size; ++idx) {
+     dist_arr[idx] = malloc(sizeof(float*));
+   }
    int i;
    int j;
    int k;
    int idx_0;
    int idx_1;
+   float dist;
+   float delta;
    
    //  Calculate distance between all minority elements
-
-   for (i = 0; i < total_min; i++;){
+  
+   for (i = 0; i < total_min; i++){
       idx_0 = minorities[i];
       for(j = i; j < total_min; j++){
          idx_1 = minorities[j];
-         int dist = 0;
-         for(k = 0; k < 31; k ++){
-            dist = dist +  pow(arr[idx_0][k] - arr[idx_1][k], 2);
+         dist = 0;
+         for(k = 0; k < 31; k++){
+            delta = pow(arr[idx_0][k] - arr[idx_1][k], 2);
+            dist = dist +  delta;
          } 
          dist = sqrt(dist);
          dist_arr[i][j] = dist;
          dist_arr[j][i] = dist;
          }
       }
-   }
-
    // generate new values between existing 
-   int total_new = (int) ceil(N/2)-total_min;
+   int total_new = (int) ceil(N/2)-total_min ;
    float** newVals = malloc(sizeof(float*) * total_new);
-   for (idx = 0; idx < total_new; ++idx) {
-     newVals[idx] = malloc(sizeof(float) * M);
+   for(idx = 0; idx < total_new; ++idx) {
+     newVals[idx] = malloc(sizeof(float*) * M);
    }
    
+   float rand_seed0, rand_seed1, val; 
    idx = 0;
    while(idx < total_new){
-      for(i = 0; i < total_min; i ++){
+      for(i = 0; i < total_min; i++){
           idx_0 = minorities[i];
-          for(j = i+1;idx < total_new && j < total_min; j ++){
+          for(j = i+1;idx < total_new && j < total_min; j++){
             idx_1 = minorities[j];
-            float rand_seed0 = rand();
-            float rand_seed1 = rand();
+            rand_seed0 = r2();
+            rand_seed1 = r2();
             dist = dist_arr[i][j];
-            for(k = 0; k < 31; k ++){
-                newVals[idx][k] = arr[idx_0][k] + rand_seed0 * dist;
+            for(k = 0; k < 30; k++){
+                if(k == 0){val = arr[idx_0][0]*172792.0F + rand_seed0 * dist;}
+                else {val = arr[idx_0][k] + rand_seed0 * dist;}
+                newVals[idx][k] = val;
             }
+            newVals[idx][30] = 1;
             idx ++;
             if(idx < total_new){
-                for(k = 0; k < 31; k++){
+                for(k = 0; k < 30; k++){
                   newVals[idx][k] = arr[idx_1][k] + rand_seed1 * dist;
                 }
+                newVals[idx][30] = 1;
                 idx ++;
-            } else {return 0;}
+            } 
+            else {
+              writeCSV(newVals, total_new, M, "smote.txt");
+              return 0;}
           }
       }
    }
-
    return 0;
+}
