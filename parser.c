@@ -192,7 +192,7 @@ int main(){
                 idx ++;
             } 
             else {
-              writeCSV(newVals, total_new, M, "smote.txt");
+              writeCSV(newVals, total_new, M, "smote.csv");
               return 0;}
           }
       }
