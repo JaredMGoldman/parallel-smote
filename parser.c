@@ -27,6 +27,7 @@
 
 #define N 284807
 #define M 31
+#define ratio 0.2
 
 int parseCSV(float** array, int* minorities,char* filename) {
 
@@ -120,6 +121,26 @@ float r2()
   float new_max = (float) RAND_MAX;
   float rand_float = rand_int / new_max;
   return rand_float;
+}
+
+void generateData(){
+  float** data = malloc(sizeof(float*) * N);
+  int i, j;
+  for(i = 0; i < N; ++i){
+    data[i] = malloc(sizeof(float) * M);
+  }
+  for(i = 0; i <(1-ratio) * N; i ++){
+    for(j = 0; j < M-1; j ++){
+      data[i][j] = r2();
+    }
+    data[i][M-1] = 0.0F;
+  }
+  for(i = (1-ratio) * N; i < N; i ++){
+    for(j = 0; j < M-1; j ++){
+      data[i][j] = r2();
+    }
+    data[i][M-1] = 1.0F;
+  }
 }
 
 int main(){
