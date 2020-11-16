@@ -3,8 +3,6 @@
 #include <string.h>
 #include <math.h>
 
-#define N 1000       // number of rows
-#define M 31         // number of features per row
 #define ratio 30.0F  // (number of majority elements / number of minority elements)
 
 float rand_unif(){
@@ -15,7 +13,7 @@ float rand_unif(){
   return rand_float;
 }
 
-void generateData(float** data){
+void generateData(float** data, int N, int M){
   // create a dataset of minority elements to be used later
   int i,j;
   for(i = 0; i < N; i ++){
@@ -26,19 +24,11 @@ void generateData(float** data){
   }
 }
 
-int main(){
-
-   // create an array for generated minority data to be stored in 
-   float** data = malloc(sizeof(float*) * N);
-   int i, j, k, idx;
-   for(i = 0; i < N; ++i){
-     data[i] = malloc(sizeof(float) * M);
-   }
-
-   generateData(data);
-   printf("Generated the data...\n");
-
-   // initialize array to store the distane values for each pair of points 
+int seqSMOTE(float** data, int N, int M){
+  int total_new = (int) ((ratio - 1.0F) * (float) N) ;
+  printf("\n--------------------------\nFor sequential SMOTE with:\nN = %d, M = %d, ratio = %4.2f\nThere are %d FLOPS.\n--------------------------\n\n", N, M, ratio, total_new + N*N);
+  int i, j, k, idx;
+  // initialize array to store the distane values for each pair of points 
    float** dist_arr = malloc(sizeof(float*) * N);
    for (idx = 0; idx < N; ++idx) {
      dist_arr[idx] = malloc(sizeof(float*) * N);
@@ -61,12 +51,11 @@ int main(){
 
    printf("Calculated the distances...\n");
    // initialize array to house synthetic values 
-   int total_new = (int) ((ratio - 1.0F) * (float) N) ;
    float** newVals = malloc(sizeof(float*) * total_new);
    for(idx = 0; idx < total_new; ++idx) {
      newVals[idx] = malloc(sizeof(float*) * M);
    }
-   
+
    printf("Started smote...\n");
    // generate synthetic values and store in newVals. Store as csv upon completion.
    float rand_seed0, rand_seed1, val; 
@@ -97,4 +86,20 @@ int main(){
    }
    printf("We made it!\n");
    return 0;
+}
+
+int main(){
+   // create an array for generated minority data to be stored in 
+   int N, i, j, k;
+   int M = 10;
+   for(N = 1000; N < 150000; N = N * 10){
+     float** data = malloc(sizeof(float*) * N);
+     for(i = 0; i < N; ++i){
+       data[i] = malloc(sizeof(float) * M);
+     }
+     generateData(data, N, M);
+     printf("Generated the data...\n");
+   
+     int rc = seqSMOTE(data, N, M);
+   } 
 }
