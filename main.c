@@ -5,6 +5,7 @@
 #include <math.h>
 
 #define ratio 30.0F  // (number of majority elements / number of minority elements)
+#define KMP_AFFINITY =compact
 
 float rand_unif(){
   // generate a random float between 0 and 1
@@ -92,8 +93,7 @@ int seqSMOTE(float** data, int N, int M){
    return 0;
 }
 
-int parSMOTE(float** data, int N, int M, int p) {
-  omp_set_num_threads(p);
+int seqSMOTEB(float** data, int N, int M) {
   int total_new = (int) ((ratio - 1.0F) * (float) N) ;
   int i, j, k, idx;
 
@@ -105,7 +105,6 @@ int parSMOTE(float** data, int N, int M, int p) {
 
 //  Calculate distance between all minority elements
   float dist, delta;
-  #pragma omp parallel for private(i,j) shared(data) schedule(auto)
   for (i = 0; i < N/2; i++){
     for(j = i+1; j < N; j++){
       dist = 0;
@@ -138,13 +137,79 @@ int parSMOTE(float** data, int N, int M, int p) {
   idx = 0;
   int numGenerated = ratio - 1;
   int tot;
-  #pragma omp parallel for private(i,j,k,tot, val, idx, dist, rand_seed0) shared(numGenerated, data, p, dist_arr, newVals, M, N) schedule(auto)
+  int p = 1;
   for(i = 0; i < p; ++i){
     for(j =i* (int) (N/p); j < (i+1)* (N/p); j ++){
       for(tot = 0; tot < numGenerated; ++tot){
         idx = (int) (rand_unif() * N / p + i * N / p);
         rand_seed0 = rand_unif();
         dist = dist_arr[min(j, idx)][max(j, idx)];
+        for(k = 0; k < M; k++){
+            val = data[j][k] + rand_seed0 * dist;
+            newVals[j*numGenerated+tot][k] = val;
+          }
+        }
+    }
+  }
+  return 0;
+}
+
+
+int parSMOTE(float** data, int N, int M, int p) {
+  omp_set_num_threads(p);
+  int total_new = (int) ((ratio - 1.0F) * (float) N) ;
+  int i, j, k, idx;
+
+// initialize array to store the distance values for each pair of points 
+  float** dist_arr = malloc(sizeof(float*) * N);
+  #pragma omp parallel for private(idx) shared(N, dist_arr) schedule(auto)
+  for (idx = 0; idx < N; ++idx) {
+    dist_arr[idx] = malloc(sizeof(float*) * N);
+  }
+
+//  Calculate distance between all minority elements
+  float dist, delta;
+  #pragma omp parallel for private(i,j,k,dist,delta) shared(data,dist_arr,N,M) schedule(dynamic,1)
+  for (i = 0; i < N/2; i++){
+    for(j = i+1; j < N; j++){
+      dist = 0;
+      for(k = 0; k < M; k++){
+        delta = (data[i][k] - data[j][k]) * (data[i][k] - data[j][k]);
+        dist = dist +  delta;
+      }
+      //dist = sqrt(dist);
+      dist_arr[i][j] = dist;
+    }
+    int new_i = (N-1) - i;
+    for (j = new_i + 1; j < N; ++j) {
+      dist = 0;
+      for(k = 0; k < M; k++){
+        delta = (data[new_i][k] - data[j][k]) * (data[new_i][k] - data[j][k]);
+        dist = dist +  delta;
+      }
+      //dist = sqrt(dist);
+      dist_arr[new_i][j] = dist;
+    }
+  }
+// initialize array to house synthetic values 
+  float** newVals = malloc(sizeof(float*) * total_new);
+  #pragma omp parallel for private(idx) shared(M,total_new, newVals) schedule(auto)
+  for(idx = 0; idx < total_new; ++idx) {
+    newVals[idx] = malloc(sizeof(float*) * M);
+  }
+
+   // generate synthetic values and store in newVals. Store as csv upon completion.
+  float rand_seed0, rand_seed1, val;
+  idx = 0;
+  int numGenerated = ratio - 1;
+  int tot;
+  #pragma omp parallel for private(i,j,k,tot, val, idx, dist, rand_seed0) shared(numGenerated, data, p, dist_arr, newVals, M, N) schedule(static, 1)
+  for(i = 0; i < p; ++i){
+    for(j =i* (int) (N/p); j < (i+1)* (N/p); j ++){
+      for(tot = 0; tot < numGenerated; ++tot){
+        idx = (int) (rand_unif() * N / p + i * N / p);
+        rand_seed0 = rand_unif();
+        dist = sqrt(dist_arr[min(j, idx)][max(j, idx)]);
         for(k = 0; k < M; k++){
             val = data[j][k] + rand_seed0 * dist;
             newVals[j*numGenerated+tot][k] = val;
@@ -163,6 +228,8 @@ int main(){
    int Ps[] = {1,5,10,15,20};
    int Ns[] = {60,300,600,3000,6000,12000,18000,21000,30000,60000};
    int len = sizeof(Ns)/sizeof(Ns[0]);
+   int stimes[len*5];
+   int ptimes[len*5];
    for(idx0 = 0; idx0 < len; idx0++){
      for(idx1 = 0; idx1 < 5; idx1 ++){
       int N = Ns[idx0]; 
@@ -172,19 +239,22 @@ int main(){
         data[i] = malloc(sizeof(float) * M);
       }
       generateData(data, N, M);
-      printf("N=%d,M=%d\n",N,M);
+      //printf("N=%d,M=%d\n",N,M);
       //printf("Generated the data...\n");
       
       double t1,t2, t1s,t2s;
       t1s = omp_get_wtime();
-      int rc = seqSMOTE(data, N, M);
+      int rc = seqSMOTEB(data, N, M);
       t2s = omp_get_wtime();
-      printf("Sequential: %.5g sec\n",t2-t1);
-  
+      //printf("Sequential: %.5g sec\n",t2-t1);
+      stimes[idx0 * 5 + idx1] = t2s - t1s;  
+
       t1 = omp_get_wtime();
       int foo = parSMOTE(data, N, M, p);
       t2 = omp_get_wtime();
-      printf("%d,%d,%.5g,&.g;\n",N,p,t2-t1, t2s-t1s); 
-     }   
+      ptimes[idx0 * 5 + idx1] = t2 - t1;
+      printf("%d,%d,%.5g,%.5g\n",N,p,t2-t1, t2s-t1s); 
+     }  
   } 
+   
 }
