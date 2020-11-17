@@ -17,12 +17,11 @@ def analyze(csv_file):
     if arr[1] not in p_dict:
       p_dict[arr[1]] = 1
   ps = p_dict.keys()
+  ps = list(ps)
   ps.sort()
-  #print(ps)
-  print()
   ns = n_dict.keys()
+  ns = list(ns)
   ns.sort()
-  #print(ns)
 
   for i in range(len(ps)):
     p_dict[ps[i]] = i
@@ -31,15 +30,11 @@ def analyze(csv_file):
 
   data = np.zeros((len(ns),len(ps)))
   for arr in mat:
-     print(arr)
      data[n_dict[arr[0]],p_dict[arr[1]]] = arr[2]
-  #print("\n")
   for i,arr in enumerate(data):
     n = ns[i]
     for j,elt in enumerate(arr):
-      print(elt)
       data[i,j] = (n*n / 1000000) / (elt + 0.001)
-  #print(data)
   seqData = np.zeros(len(ns))
   for i,arr in enumerate(mat):
     seqData[n_dict[arr[0]]] += arr[3]
@@ -67,6 +62,7 @@ def analyze(csv_file):
     line, = plt.plot(ns,arr,'-o',label="p=" + str(ps[i]))
     plot2_series.append(line)
   seqLine, = plt.plot(ns,seqData,'-o',label="sequential")
+  plot2_series = plot2_series[::-1]
   plot2_series.append(seqLine)
   plt.title("Speedup of SMOTE Algorithm")
   plt.xlabel("n")
