@@ -27,7 +27,7 @@
 
 #define N 284807
 #define M 31
-#define ratio 0.2
+#define ratio 0.2F
 
 int parseCSV(float** array, int* minorities,char* filename) {
 
@@ -123,35 +123,48 @@ float r2()
   return rand_float;
 }
 
-void generateData(){
-  float** data = malloc(sizeof(float*) * N);
-  int i, j;
-  for(i = 0; i < N; ++i){
-    data[i] = malloc(sizeof(float) * M);
-  }
-  for(i = 0; i <(1-ratio) * N; i ++){
+void generateData(float** data){
+  float ub_f = (1.0F-ratio) * (float) N;
+  int ub = (int) ub_f;
+
+  int i,j;
+  for(i = 0; i < ub; i ++){
     for(j = 0; j < M-1; j ++){
       data[i][j] = r2();
     }
     data[i][M-1] = 0.0F;
   }
-  for(i = (1-ratio) * N; i < N; i ++){
+  for(i = ub; i < N; i ++){
     for(j = 0; j < M-1; j ++){
-      data[i][j] = r2();
+      data[i][j] = r2() * (1.0F + (float)j);
     }
     data[i][M-1] = 1.0F;
   }
 }
 
-int main(){
-   // Generate array of data with minority element indicies stored in minorities
+void loadDataFromCSV(){
+   int idx;
    float** arr = malloc(sizeof(float*) * N);
    int* minorities = malloc(sizeof(int) * 142404);
-   int idx;
+   
    for (idx = 0; idx < N; ++idx) {
-     arr[idx] = malloc(sizeof(float) * M);
+    arr[idx] = malloc(sizeof(float) * M);
    }
    int total_min = parseCSV(arr, minorities, "creditcard.csv");
+
+}
+
+int main(){
+
+  // create an array for generated data to be stored in 
+  float** data = malloc(sizeof(float*) * N);
+  int i, j, idx, total_min;
+  for(i = 0; i < N; ++i){
+    data[i] = malloc(sizeof(float) * M);
+  }
+   
+   // Generate array of data with minority element indicies stored in minorities
+   
    int dist_size = total_min*total_min;
    float** dist_arr = malloc(sizeof(float*) * dist_size);
    for (idx = 0; idx < dist_size; ++idx) {
